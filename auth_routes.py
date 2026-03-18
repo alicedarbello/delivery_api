@@ -2,13 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from models import User, Order
 from dependencies import create_session, verify_token
 from sqlalchemy.orm import Session
-from main import bcrypt_context, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
+from settings import ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 from schemas import UserSchema, LoginSchema, UserInfoSchema
 from jose import jwt
 from datetime import datetime, timezone, timedelta
 from fastapi.security import OAuth2PasswordRequestForm
+from passlib.context import CryptContext 
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Helper functions:
 def create_token(user_id, token_duration=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
@@ -47,7 +50,7 @@ async def get_user_info(user: User = Depends(verify_token), session: Session = D
         name=user.name,
         email=user.email,
         active=user.active,
-        orders=orders_data
+        orders=orders_data # type: ignore
     )
     return user_info
 
@@ -58,7 +61,9 @@ async def create_user(user_schema: UserSchema, session: Session = Depends(create
         raise HTTPException(status_code=400, detail="This email already exists.")
     else:
         hashed_password = bcrypt_context.hash(user_schema.password)
-        new_user = User(user_schema.name, user_schema.email, hashed_password, user_schema.active, user_schema.admin)
+        active = user_schema.active if user_schema.active is not None else True
+        admin = user_schema.admin if user_schema.admin is not None else False
+        new_user = User(user_schema.name, user_schema.email, hashed_password, active, admin)
         session.add(new_user)
         session.commit()
         return {"message": f"User {user_schema.email} created successfully."}
