@@ -4,6 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from settings import DATABASE_URL
 
 import sys
 import os
@@ -15,7 +16,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) 
 config = context.config
 
 # get the database URL from the environment variable, with a default fallback
-database_url = os.getenv("DATABASE_URL", "sqlite:///banco.db")
+database_url = DATABASE_URL
 
 # replace the sqlalchemy.url option in the config with the database URL from the environment variable
 config.set_main_option("sqlalchemy.url", database_url)
