@@ -2,7 +2,10 @@ from fastapi import Depends, HTTPException
 from models import db, User
 from sqlalchemy.orm import sessionmaker, Session
 from jose import jwt, JWTError
-from main import SECRET_KEY, ALGORITHM, oauth2_schema
+from settings import SECRET_KEY, ALGORITHM
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_schema = OAuth2PasswordBearer(tokenUrl="auth/login-form") 
 
 # Create a database session
 def create_session():    
@@ -17,7 +20,10 @@ def create_session():
 def verify_token(token: str = Depends(oauth2_schema), session: Session = Depends(create_session)): 
     try:
         user_info = jwt.decode(token, SECRET_KEY, ALGORITHM)
-        user_id = int(user_info.get("sub"))
+        sub = user_info.get("sub")
+        if sub is None:
+            raise JWTError("Invalid token: missing sub")
+        user_id = int(sub)
     except JWTError:
         raise HTTPException(status_code=401, detail="Access denied, verify the validity of your token.")
     user = session.query(User).filter(User.id ==user_id).first()

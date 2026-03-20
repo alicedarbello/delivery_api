@@ -83,7 +83,7 @@ async def add_order_item(
         order_id=order_id,
     )
     session.add(order_item)
-    order.calculate_total_price()
+    order.calculate_total_price()  # type: ignore
     session.commit()
     return {
         "message": f"Item added successfully to order number {order.id}",
@@ -149,13 +149,13 @@ async def remove_item(
         raise HTTPException(status_code=400, detail="Item not found.")
     elif item:
         order = session.query(Order).filter(Order.id == item.order_id).first()
-        if not user.admin and user.id != order.user_id:
+        if not user.admin and user.id != order.user_id:  # type: ignore
             raise HTTPException(status_code=401, detail="You're not authorized.")
         session.delete(item)
-        order.calculate_total_price()
+        order.calculate_total_price()  # type: ignore
         session.commit() 
         return {
             "message": f"Item removed successfully from order number {item.order_id}",
-            "itens": order.itens, 
+            "itens": order.itens,  # type: ignore
             "order": order
         }
