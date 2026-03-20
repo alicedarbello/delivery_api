@@ -59,6 +59,8 @@ async def create_order(
     new_order = Order(
         user_id=order_schema.user_id
     )  
+    if not session.query(User).filter(User.id == new_order.user_id).first():
+        raise HTTPException(status_code=404, detail="User not found.")
     session.add(new_order)
     session.commit()
     return {"message": f"Order created successfully. Order ID: {new_order.id}"}
@@ -133,6 +135,8 @@ async def modify_order(
         return {
             "message": f"Order number {order.id} is pending again."
         }
+    else:
+        raise HTTPException(status_code=400, detail="Invalid status value.")
 
 @order_router.delete("/{order_id}/items/{id_item}")
 async def remove_item(
